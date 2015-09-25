@@ -49,7 +49,7 @@
 			(cadr maybe-param)))
 	     (setup (vector-ref mode 0)))
 	;; setup it with mode
-	(%make-cipher mode (setup spec key param))))
+	(%make-cipher mode (setup (spec) key param))))
 
     (define (cipher-encrypt cipher pt)
       ((vector-ref (cipher-mode cipher) 1) (cipher-key cipher) pt))

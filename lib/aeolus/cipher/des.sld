@@ -93,11 +93,12 @@
     ;; nothing to be done
     (define (des-done key) #t)
 
-    (define DES (vector 8 8 8 16
-			des-setup
-			des-encrypt
-			des-decrypt
-			des-done))
+    (define (DES)
+      (vector 8 8 8 16
+	      des-setup
+	      des-encrypt
+	      des-decrypt
+	      des-done))
 
     (define-record-type <des3-key> 
       (%make-des3-key ek0 ek1 ek2 dk0 dk1 dk2) des3-key?
@@ -157,12 +158,13 @@
       8)
     
     
-    (define DES3 (vector 24 24 8 16
-			 des3-setup
-			 des3-encrypt
-			 des3-decrypt
-			 des-done)
-      )
+    (define (DES3)
+      (vector 24 24 8 16 
+	      des3-setup
+	      des3-encrypt
+	      des3-decrypt
+	      des-done))
+      
     )
 )
 
