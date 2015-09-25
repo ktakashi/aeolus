@@ -49,8 +49,8 @@
    ((library (rnrs))
     (import (rename (rnrs) (bitwise-arithmetic-shift arithmetic-shift))))
    (else                (error "bitwise library not found")))
-  (include "schedule.scm")
-  (include "operations.scm")
+  (include "des/schedule.scm")
+  (include "des/operations.scm")
   (begin
     (define-record-type <des-key> (%make-des-key ek dk) des-key?
       (ek des-key-ek)
