@@ -20,7 +20,7 @@ See [tests/test-des.scm](tests/test-des.scm).
 Requirements
 ------------
 
-This library requires the following SRFI:
+It is *better* to have the following SRFIs but not necessarily.
 
 - SRFI-60, SRFI-33 or R6RS
 - SRFI-64 for testing

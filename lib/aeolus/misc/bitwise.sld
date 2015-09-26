@@ -35,6 +35,8 @@
    ((library (srfi 33)) (import (srfi 33)))
    ((library (rnrs))
     (import (rename (rnrs) (bitwise-arithmetic-shift arithmetic-shift))))
-   ;; TODO implement them (can be done by copying the SRFI
-   (else (import (scheme base))
-	 (begin (error "bitwise library not found")))))
+   ;; use SRFI implementation
+   (else 
+    (import (scheme base))
+    (begin (define (provide ignore) ignore))
+    (include "logical.scm"))))
