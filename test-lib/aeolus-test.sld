@@ -56,14 +56,24 @@
 	  ((_ expr) (test-assert 'expr expr))
 	  ((_ name expr)
 	   (guard (e (else (display "FAIL: ") (write name) (newline)))
-	     (or expr)))))
+	     (and expr
+		  (display "PASS: ") (write name) (newline))))))
+      (define-syntax test-error
+	(syntax-rules ()
+	  ((_ expr) (test-assert 'expr expr))
+	  ((_ name expr)
+	   (guard (e (else (display "PASS: ") (write name) (newline)))
+	     expr
+	     (display "FAIL: ") (write name) (newline)))))
       (define-syntax test-equal
 	(syntax-rules ()
 	  ((_ expected expr) (test-equal 'expr expected expr))
 	  ((_ name expected expr)
 	   (let ((res expr))
-	     (cond
-	      ((not (equal? res expected))
-	       (display "FAIL: ") (display name) (newline)
-	       (display "   expected ") (write expected) (newline)
-	       (display "   but got ")  (write res) (newline)))))))))))
+	     (cond ((equal? res expected)
+		    (display "PASS: ") (write name) (newline))
+		   (else
+		    (display "FAIL: ") (display name) (newline)
+		    (display "   expected ") (write expected) (newline)
+		    (display "   but got ")  (write res) (newline)))))))))
+   ))
