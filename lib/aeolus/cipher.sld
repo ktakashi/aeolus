@@ -44,9 +44,10 @@
       (let* ((param (if (null? maybe-param)
 			#f 
 			(car maybe-param)))
-	     (setup (vector-ref mode 0)))
+	     (modev (mode))
+	     (setup (vector-ref modev 0)))
 	;; setup it with mode
-	(%make-cipher mode (setup (spec) key param))))
+	(%make-cipher modev (setup (spec) key param))))
 
     (define (cipher-encrypt cipher pt)
       ((vector-ref (cipher-mode cipher) 1) (cipher-key cipher) pt))

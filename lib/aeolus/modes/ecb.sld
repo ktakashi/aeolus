@@ -28,8 +28,8 @@
 ;;;  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 (define-library (aeolus modes ecb)
-  (export *mode-ecb*)
-  (import (scheme base) (scheme write))
+  (export mode-ecb)
+  (import (scheme base))
   (begin
     (define-record-type <symmetric-ecb> (make-ecb spec key blocklen)
       symmetric-ecb?
@@ -78,6 +78,6 @@
     (define (ecb-done ecb)
       ((vector-ref (ecb-cipher-spec ecb) 7) (ecb-cipher-key ecb)))
 
-    (define *mode-ecb* (vector ecb-start ecb-encrypt ecb-decrypt ecb-done))
+    (define (mode-ecb) (vector ecb-start ecb-encrypt ecb-decrypt ecb-done))
     )
 )
