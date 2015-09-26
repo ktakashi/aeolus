@@ -30,14 +30,9 @@
 (define-library (aeolus cipher des)
   (export DES DES3
 	  (rename DES3 DESede))
-  (import (scheme base) (aeolus cipher descriptor))
-  ;; TODO create bitwise library to handle this
-  (cond-expand
-   ((library (srfi 60)) (import (srfi 60)))
-   ((library (srfi 33)) (import (srfi 33)))
-   ((library (rnrs))
-    (import (rename (rnrs) (bitwise-arithmetic-shift arithmetic-shift))))
-   (else                (error "bitwise library not found")))
+  (import (scheme base) 
+	  (aeolus cipher descriptor)
+	  (aeolus misc bitwise))
   (include "des/schedule.scm")
   (include "des/operations.scm")
   (begin
