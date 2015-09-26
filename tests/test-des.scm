@@ -1,6 +1,7 @@
 (import (scheme base)
 	(aeolus cipher)
-	(aeolus cipher des))
+	(aeolus cipher des)
+	(aeolus modes ecb))
 
 (cond-expand
  ((library (rnrs))    (import (rename (rnrs) (bitwise-arithmetic-shift arithmetic-shift))))
@@ -62,7 +63,8 @@
 
 (test-begin "DES")
 
-(test-assert "cipher?" (cipher? (make-cipher DES #u8(1 2 3 4 5 6 7 8))))
+(test-assert "cipher?"
+	     (cipher? (make-cipher DES #u8(1 2 3 4 5 6 7 8) *mode-ecb*)))
 
 (define test-vectors
   '(#(#x0000000000000000 #x0000000000000000 #x8CA64DE9C1B123A7)
@@ -147,14 +149,17 @@
 		  plain
 		  (cipher-decrypt cipher ct)))))
 
-(for-each (des-ecb-test (lambda (key) (make-cipher DES key))) test-vectors)
+(for-each (des-ecb-test (lambda (key) (make-cipher DES key *mode-ecb*)))
+	  test-vectors)
 (for-each (des-ecb-test (lambda (key)
 			  ;; do kinda double des
-			  (make-cipher DES3 (bytevector-append key key)))) 
+			  (make-cipher DES3 (bytevector-append key key)
+				       *mode-ecb*))) 
 			test-vectors)
 (for-each (des-ecb-test (lambda (key)
 			  ;; do kinda triple des
-			  (make-cipher DES3 (bytevector-append key key key)))) 
+			  (make-cipher DES3 (bytevector-append key key key)
+				       *mode-ecb*))) 
 			test-vectors)
 
 (test-end)

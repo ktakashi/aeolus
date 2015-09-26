@@ -32,9 +32,7 @@
 	  cipher-encrypt
 	  cipher-decrypt
 	  cipher-done)
-  (import (scheme base)
-	  ;; default mode
-	  (aeolus modes ecb)) 
+  (import (scheme base))
   (begin
     ;; TODO padding
     (define-record-type <cipher> (%make-cipher mode key) cipher?
@@ -42,11 +40,10 @@
       (key  cipher-key) ;; mode key
       )
       
-    (define (make-cipher spec key . maybe-param)
-      (let* ((mode (if (null? maybe-param) *mode-ecb* (car maybe-param)))
-	     (param (if (or (null? maybe-param) (null? (cdr maybe-param)))
+    (define (make-cipher spec key  mode . maybe-param)
+      (let* ((param (if (null? maybe-param)
 			#f 
-			(cadr maybe-param)))
+			(car maybe-param)))
 	     (setup (vector-ref mode 0)))
 	;; setup it with mode
 	(%make-cipher mode (setup (spec) key param))))
