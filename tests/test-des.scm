@@ -1,65 +1,14 @@
 (import (scheme base)
 	(aeolus cipher)
 	(aeolus cipher des)
-	(aeolus modes ecb))
+	(aeolus modes ecb)
+	(aeolus-test))
 
 (cond-expand
  ((library (rnrs))    (import (rename (rnrs) (bitwise-arithmetic-shift arithmetic-shift))))
  ((library (srfi 60)) (import (srfi 60)))
  ((library (srfi 33)) (import (srfi 33)))
  (else                (error "bitwise library not found")))
-
-;; sign...
-(cond-expand
- ((library (srfi 64))
-  (import (srfi 64)))
- ((library (chibi test))
-  ;; test-equal in (chibi test) contains a bug
-  ;; (the macro can't be expanded properly)
-  ;; so make thin wrapper
-  (import (except (chibi test) test-equal))
-  (begin
-    (define-syntax test-equal
-      (syntax-rules ()
-	((_ name expect expr)
-	 (test name expect expr))
-	((_ expect expr)
-	 (test-equal 'expr expect expr))))))
- ((library (gauche test))
-  (import (rename (gauche test)
-		  (test-start test-begin)
-		  (test-section test-group)))
-  (begin
-    (define-syntax test-equal
-      (syntax-rules ()
-	((_ name expect expr)
-	 (test* name expect expr))
-	((_ expect expr)
-	 (test-equal 'expr expect expr))))
-    (define-syntax test-assert
-      (syntax-rules ()
-	((_ name expr)
-	 (test* name #t expr))
-	((_ expect expr)
-	 (test-assert 'expr expr))))))
- (else
-  (import (scheme write))
-  (begin
-    (define (test-begin . o) #f)
-    (define (test-end . o) #f)
-    (define-syntax test
-      (syntax-rules ()
-	((test expected expr)
-	 (let ((res expr))
-	   (cond
-	    ((not (equal? expr expected))
-	     (display "FAIL: ")
-	     (write 'expr)
-	     (display ": expected ")
-	     (write expected)
-	     (display " but got ")
-	     (write res)
-	     (newline))))))))))
 
 (test-begin "DES")
 
