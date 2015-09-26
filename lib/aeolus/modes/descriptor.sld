@@ -1,6 +1,6 @@
 ;;; -*- mode: scheme; coding: utf-8; -*-
 ;;;
-;;; aeolus/cipher.sld - ciphers interface
+;;; aeolus/modes/descriptor.sld - Mode descriptor
 ;;;
 ;;;  Copyright (c) 2015  Takashi Kato  <ktakashi@ymail.com>
 ;;;  
@@ -27,34 +27,38 @@
 ;;;  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;;;  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-(define-library (aeolus cipher)
-  (export make-cipher cipher?
-	  cipher-encrypt
-	  cipher-decrypt
-	  cipher-done)
-  (import (scheme base) (aeolus modes descriptor))
+;; the mode descriptor is an vector (for now) but not depend on it
+;; which contains the followings
+;;  - min key length
+;;  - max key length
+;;  - block size
+;;  - default number of rounds
+;;  - setup procedure
+;;  - encryption procedure (ECB)
+;;  - decryption procedure (ECB)
+;;  - done procedure
+
+(define-library (aeolus modes descriptor)
+  (export make-mode-descriptor
+	  mode-descriptor-start
+	  mode-descriptor-encrypt
+	  mode-descriptor-decrypt
+	  mode-descriptor-setiv
+	  mode-descriptor-getiv
+	  mode-descriptor-update-aad
+	  mode-descriptor-done)
+  (import (scheme base))
   (begin
-    ;; TODO padding
-    (define-record-type <cipher> (%make-cipher mode key) cipher?
-      (mode cipher-mode)
-      (key  cipher-key) ;; mode key
-      )
-      
-    (define (make-cipher spec key  mode . maybe-param)
-      (let* ((param (if (null? maybe-param)
-			#f 
-			(car maybe-param)))
-	     (modev (mode))
-	     (setup (mode-descriptor-start modev)))
-	;; setup it with mode
-	(%make-cipher modev (setup (spec) key param))))
-
-    (define (cipher-encrypt cipher pt)
-      ((mode-descriptor-encrypt (cipher-mode cipher)) (cipher-key cipher) pt))
-
-    (define (cipher-decrypt cipher ct)
-      ((mode-descriptor-decrypt (cipher-mode cipher)) (cipher-key cipher) ct))
-
-    (define (cipher-done cipher)
-      ((mode-descriptor-decrypt (cipher-mode cipher)) (cipher-key cipher)))
-    ))
+    (define (make-mode-descriptor start encrypt decrypt setiv getiv 
+				  update-aad done)
+      (vector start encrypt decrypt setiv getiv update-aad done))
+    
+    (define (mode-descriptor-start      desc) (vector-ref desc 0))
+    (define (mode-descriptor-encrypt    desc) (vector-ref desc 1))
+    (define (mode-descriptor-decrypt    desc) (vector-ref desc 2))
+    (define (mode-descriptor-setiv      desc) (vector-ref desc 3))
+    (define (mode-descriptor-getiv      desc) (vector-ref desc 4))
+    (define (mode-descriptor-update-aad desc) (vector-ref desc 5))
+    (define (mode-descriptor-done       desc) (vector-ref desc 6))
+    )
+)

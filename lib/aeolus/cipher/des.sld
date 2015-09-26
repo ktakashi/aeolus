@@ -27,21 +27,10 @@
 ;;;  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;;;  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-;; the exporting cipher implementation must be an vector
-;; which contains the followings
-;;  - min key length
-;;  - max key length
-;;  - block size
-;;  - default number of rounds
-;;  - setup procedure
-;;  - encryption procedure (ECB)
-;;  - decryption procedure (ECB)
-;;  - done procedure
-
 (define-library (aeolus cipher des)
   (export DES DES3
 	  (rename DES3 DESede))
-  (import (scheme base))
+  (import (scheme base) (aeolus cipher descriptor))
   ;; TODO create bitwise library to handle this
   (cond-expand
    ((library (srfi 60)) (import (srfi 60)))
@@ -94,11 +83,11 @@
     (define (des-done key) #t)
 
     (define (DES)
-      (vector 8 8 8 16
-	      des-setup
-	      des-encrypt
-	      des-decrypt
-	      des-done))
+      (make-cipher-descriptor 8 8 8 16
+			      des-setup
+			      des-encrypt
+			      des-decrypt
+			      des-done))
 
     (define-record-type <des3-key> 
       (%make-des3-key ek0 ek1 ek2 dk0 dk1 dk2) des3-key?
@@ -159,11 +148,11 @@
     
     
     (define (DES3)
-      (vector 24 24 8 16 
-	      des3-setup
-	      des3-encrypt
-	      des3-decrypt
-	      des-done))
+      (make-cipher-descriptor 24 24 8 16 
+			      des3-setup
+			      des3-encrypt
+			      des3-decrypt
+			      des-done))
       
     )
 )

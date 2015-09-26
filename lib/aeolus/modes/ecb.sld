@@ -29,7 +29,9 @@
 
 (define-library (aeolus modes ecb)
   (export mode-ecb)
-  (import (scheme base))
+  (import (scheme base)
+	  (aeolus cipher descriptor)
+	  (aeolus modes descriptor))
   (begin
     (define-record-type <symmetric-ecb> (make-ecb spec key blocklen)
       symmetric-ecb?
@@ -39,8 +41,9 @@
 
     ;; spec is a vector
     (define (ecb-start spec key param)
-      (let ((skey ((vector-ref spec 4) key (vector-ref spec 3)))
-	    (blocklen (vector-ref spec 2)))
+      (let ((skey ((cipher-descriptor-setup spec) key 
+		   (cipher-descriptor-default-round spec)))
+	    (blocklen (cipher-descriptor-block-size spec)))
 	(make-ecb spec skey blocklen)))
 
     (define (ecb-encrypt ecb pt)
@@ -49,7 +52,7 @@
       (unless (zero? (modulo pt-len blocklen))
 	(error "ecb-encrypt: invalid argument"))
       (let ((ct (make-bytevector (bytevector-length pt)))
-	    (encrypt (vector-ref (ecb-cipher-spec ecb) 5))
+	    (encrypt (cipher-descriptor-encrypt (ecb-cipher-spec ecb)))
 	    (key (ecb-cipher-key ecb)))
 	(let loop ((i 0))
 	  (if (= i pt-len)
@@ -65,7 +68,7 @@
       (unless (zero? (modulo ct-len blocklen))
 	(error "ecb-decrypt: invalid argument"))
       (let ((pt (make-bytevector (bytevector-length ct)))
-	    (decrypt (vector-ref (ecb-cipher-spec ecb) 6))
+	    (decrypt (cipher-descriptor-decrypt (ecb-cipher-spec ecb)))
 	    (key (ecb-cipher-key ecb)))
 	(let loop ((i 0))
 	  (if (= i ct-len)
@@ -76,8 +79,10 @@
 		(loop (+ i blocklen)))))))
 
     (define (ecb-done ecb)
-      ((vector-ref (ecb-cipher-spec ecb) 7) (ecb-cipher-key ecb)))
+      ((cipher-descriptor-done (ecb-cipher-spec ecb)) (ecb-cipher-key ecb)))
 
-    (define (mode-ecb) (vector ecb-start ecb-encrypt ecb-decrypt ecb-done))
+    (define (mode-ecb)
+      (make-mode-descriptor ecb-start ecb-encrypt ecb-decrypt 
+			    #f #f #f ecb-done))
     )
 )
