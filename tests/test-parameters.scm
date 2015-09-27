@@ -18,4 +18,11 @@
       (test-equal "parameter-foo (2)" "s" (parameter-foo composite))
       (test-equal "parameter-iv" #u8(1) (parameter-iv composite)))))
 
+(test-assert "ctr parameter (1)" 
+	     (counter-parameter? (make-counter-parameter 'big)))
+(test-assert "ctr parameter (2)" 
+	     (counter-parameter? (make-counter-parameter '(big rfc3686))))
+(test-error "ctr parameter (error)"  (make-counter-parameter 'unknown))
+
+
 (test-end)

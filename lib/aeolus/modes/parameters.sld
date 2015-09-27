@@ -31,8 +31,10 @@
   (export mode-parameter? make-composite-parameter 
 	  define-mode-parameter
 	  make-iv-paramater iv-parameter? parameter-iv
+	  make-counter-parameter counter-parameter?
+	  parameter-endian parameter-round
 	  )
-  (import (scheme base))
+  (import (scheme base) (scheme case-lambda))
   (begin
     (define-record-type <composite-parameter> 
       (%make-composite-parameter parameters) mode-parameter?
@@ -66,7 +68,7 @@
 	((_ who () o) (begin))))
     ;; mode parameter is immutable so not setter
     (define-syntax define-mode-parameter
-      (syntax-rules ()
+      (syntax-rules (lambda protocol)
 	((_ name (ctr params ...) pred (field accessor ...) ...)
 	 (define-mode-parameter "field" name %ctr %pred
 	   (ctr params ...) pred ((field accessor ...) ...) ()))
@@ -76,9 +78,23 @@
 	   (ctr params ...) pred (rest ...)
 	   (fields ... (field real-accessor accessor ...))))
 	((_ "field" name %ctr %pred (ctr params ...) pred () (fields ...))
+	 (define-mode-parameter "ctr" name %ctr %pred
+	   (ctr params ...) pred fields ... ))
+	;; constructor
+	;; TODO should we add protocol keyword as well?
+	((_ "ctr" name %ctr %pred (ctr (lambda (p) expr ...)) pred 
+	    (field rest ...) ...)
+	 (begin
+	   ;; kinda R6RS protocol looks like thing
+	   (define-mode-parameter "make" name %real %pred
+	     (%ctr field ...) pred (field rest ...) ...)
+	   (define ctr
+	     (let ((this (lambda (p) expr ...)))
+	       (lambda args
+		 (apply (this %ctr) args))))))
+	((_ "ctr" name %ctr %pred (ctr params ...) pred fields ...)
 	 (define-mode-parameter "make" name %ctr %pred
 	   (ctr params ...) pred fields ... ))
-	;; TODO protocol looks like constructor
 	((_ "make" name %ctr %pred (ctr params ...) pred
 	    (field real-accessor accessor field-pred? ...) ...)
 	 (begin
@@ -97,6 +113,19 @@
 
     (define-mode-parameter <iv-parameter> (make-iv-paramater iv) iv-parameter?
       (iv parameter-iv bytevector?))
+
+    (define (counter-type? o)
+      (or (and (symbol? o) (memq o '(little big)))
+	  (and (list? o) (counter-type? (car o)) (eq? (cadr o) 'rfc3686))))
+    (define-mode-parameter <counter-parameter> 
+      (make-counter-parameter 
+       (lambda (p) 
+	 (case-lambda
+	  ((type) (p type 0))
+	  ((type round) (p type round)))))
+      counter-parameter?
+      (endian parameter-endian counter-type?)
+      (rount  parameter-round  integer?))
 
     )
 )
