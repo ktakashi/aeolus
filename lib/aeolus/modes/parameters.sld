@@ -34,98 +34,109 @@
 	  make-counter-parameter counter-parameter?
 	  parameter-endian parameter-round
 	  )
-  (import (scheme base) (scheme case-lambda))
+  (import (except (scheme base) define-record-type)
+	  (scheme case-lambda)
+	  (aeolus misc record))
   (begin
-    (define-record-type <composite-parameter> 
-      (%make-composite-parameter parameters) mode-parameter?
-      (parameters composite-mode-parameters))
+    ;; just an interface
+    (define-record-type (<mode-parameter> make-mode-parameter mode-parameter?))
 
-    (define (make-composite-parameter . params)
-      (define (check params)
-	(or (null? params)
-	    (and (mode-parameter? (car params))
-		 (check (cdr params)))))
-      (unless (check params)
-	(error "make-composite-parameter: mode-parameter is required" params))
-      (%make-composite-parameter 
-       ;; Should we use append-map in SRFI-1?
-       ;; but not sure if I should add more dependency...
-       (apply append (map composite-mode-parameters params))))
+    (define-record-type (<composite-parameter> make-composite-parameter
+					       composite-parameter?)
+      (parent <mode-parameter>)
+      (fields (immutable parameters parameter-composite-parameters))
+      (protocol 
+       (lambda (p)
+	 (lambda params
+	   (define (check params)
+	     (or (null? params)
+		 (and (mode-parameter? (car params))
+		      (check (cdr params)))))
+	   (unless (check params)
+	     (error "make-composite-parameter: mode-parameter is required"
+		    params))
+	   (p (let loop ((params params) (r '()))
+		(cond ((null? params) (reverse r))
+		      ((composite-parameter? (car params))
+		       (loop (cdr params)
+			     `(,@(parameter-composite-parameters (car params))
+			       . r)))
+		      (else (loop (cdr params) (cons (car params) r))))))))))
 
     (define (find-parameter pred composite)
-      (let loop ((parameters (composite-mode-parameters composite)))
-	(cond ((null? parameters) #f)
-	      ((pred (car parameters)) (car parameters))
-	      (else (loop (cdr parameters))))))
+      (cond ((composite-parameter? composite)
+	     (let loop ((parameters (parameter-composite-parameters composite)))
+	       (cond ((null? parameters) #f)
+		     ((pred (car parameters)) (car parameters))
+		     (else (loop (cdr parameters))))))
+	    ((pred composite) composite)
+	    (else #f)))
 
-    (define-syntax check-field
-      (syntax-rules ()
-	((_ who (pred?) o)
-	 (unless (pred? o)
-	   (error (string-append (symbol->string 'who) ": invalid field type")
-		  o)))
-	;; do nothing
-	((_ who () o) (begin))))
     ;; mode parameter is immutable so not setter
     (define-syntax define-mode-parameter
-      (syntax-rules (lambda protocol)
-	((_ name (ctr params ...) pred (field accessor ...) ...)
-	 (define-mode-parameter "field" name %ctr %pred
-	   (ctr params ...) pred ((field accessor ...) ...) ()))
-	((_ "field" name %ctr %pred (ctr params ...) pred 
-	    ((field accessor ...) rest ...) (fields ...))
-	 (define-mode-parameter "field" name %ctr %pred
-	   (ctr params ...) pred (rest ...)
-	   (fields ... (field real-accessor accessor ...))))
-	((_ "field" name %ctr %pred (ctr params ...) pred () (fields ...))
-	 (define-mode-parameter "ctr" name %ctr %pred
-	   (ctr params ...) pred fields ... ))
-	;; constructor
-	;; TODO should we add protocol keyword as well?
-	((_ "ctr" name %ctr %pred (ctr (lambda (p) expr ...)) pred 
-	    (field rest ...) ...)
+      (syntax-rules ()
+	;; field
+	((_ "field" name ctr pred %ctr %pred (field ...) ((fname acc) rest ...))
+	 (define-mode-parameter "field" name ctr pred %ctr %pred
+	   (field ... (fname real-accessor acc)) (rest ...)))
+	((_ "field" name ctr pred %ctr %pred (field ...) ())
+	 (define-mode-parameter "ctr" name ctr pred %ctr %pred (field ...)))
+	;; ctr
+	((_ "ctr" name (ctr proc) pred %ctr %pred (field ...))
+	 (define-mode-parameter "parent" name ctr pred %ctr %pred
+	   (protocol proc) (field ...)))
+	((_ "ctr" name ctr pred %ctr %pred (field ...))
+	 (define-mode-parameter "parent" name ctr pred %ctr %pred 
+	   (protocol #f) (field ...)))
+	;; parent
+	((_ "parent" (name p) ctr pred %ctr %pred protocol fields)
+	 (define-mode-parameter "make" name ctr pred %ctr %pred
+	   (parent p) protocol fields))
+	((_ "parent" name ctr pred %ctr %pred protocol fields)
+	 (define-mode-parameter "make" name ctr pred %ctr %pred
+	   (parent <mode-parameter>) protocol fields))
+	((_ "make" name ctr pred %ctr %pred parent protocol 
+	    ((field real acc) ...))
 	 (begin
-	   ;; kinda R6RS protocol looks like thing
-	   (define-mode-parameter "make" name %real %pred
-	     (%ctr field ...) pred (field rest ...) ...)
-	   (define ctr
-	     (let ((this (lambda (p) expr ...)))
-	       (lambda args
-		 (apply (this %ctr) args))))))
-	((_ "ctr" name %ctr %pred (ctr params ...) pred fields ...)
-	 (define-mode-parameter "make" name %ctr %pred
-	   (ctr params ...) pred fields ... ))
-	((_ "make" name %ctr %pred (ctr params ...) pred
-	    (field real-accessor accessor field-pred? ...) ...)
-	 (begin
-	   (define-record-type name (%ctr params ...) %pred
-	     (field real-accessor) ...)
+	   (define-record-type (name ctr %pred)
+	     parent
+	     protocol
+	     (fields (immutable field real) ...))
 	   (define (pred o)
-	     (and (mode-parameter? o) ;; always mode-parameter
-		  (find-parameter %pred o)))
-	   (define (ctr params ...)
-	     (check-field field (field-pred? ...) params) ...
-	     (%make-composite-parameter (list (%ctr params ...))))
-	   (define (accessor p)
-	     (let ((this (find-parameter %pred p)))
-	       (real-accessor this)))
-	   ...))))
+	     (or (%pred o)
+		 (and (composite-parameter? o)
+		      (find-parameter %pred o))))
+	   (define (acc o) 
+	     (let ((p (find-parameter %pred o)))
+	       (if p
+		   (real p)
+		   (error (string-append (symbol->string 'acc)
+					 ":doesn't have the field")))))
+	   ...))
+	;; entry point
+	((_ name ctr pred fields ...)
+	 (define-mode-parameter "field" name ctr pred %ctr %pred ()
+	   (fields ...)))))
 
-    (define-mode-parameter <iv-parameter> (make-iv-paramater iv) iv-parameter?
-      (iv parameter-iv bytevector?))
+    (define-mode-parameter <iv-parameter> 
+      (make-iv-paramater 
+       (lambda (p)
+	 (lambda (iv)
+	   (unless (bytevector? iv)
+	     (error "make-iv-paramater: iv must be a bytevector"))
+	   (p iv))))
+      iv-parameter?
+      (iv parameter-iv))
 
-    (define (counter-type? o)
-      (or (and (symbol? o) (memq o '(little big)))
-	  (and (list? o) (counter-type? (car o)) (eq? (cadr o) 'rfc3686))))
-    (define-mode-parameter <counter-parameter> 
+    (define-mode-parameter (<counter-parameter> <iv-parameter>)
       (make-counter-parameter 
        (lambda (p) 
 	 (case-lambda
-	  ((type) (p type 0))
-	  ((type round) (p type round)))))
+	  ((iv type) ((p iv) type 0))
+	  ((iv type round) ((p iv) type round)))))
       counter-parameter?
-      (endian parameter-endian counter-type?)
-      (rount  parameter-round  integer?))
+      (endian parameter-endian)
+      (rount  parameter-round))
 
     )
 )

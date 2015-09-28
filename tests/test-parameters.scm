@@ -1,14 +1,23 @@
-(import (scheme base)
+(import (except (scheme base) define-record-type)
 	(aeolus modes parameters)
+	(aeolus misc record)
 	(aeolus-test))
 
 (test-begin "Mode parameters")
 
 (let ()
-  (define-mode-parameter foo-parameter (make-foo-parameter foo) foo-parameter?
-    (foo parameter-foo string?))
+  (define-record-type (<bar> make-bar bar?))
+  (define-record-type (<foo> make-foo foo?)
+    (parent <bar>)
+    (protocol (lambda (p) (lambda (v) (p v))))
+    (fields (immutable v foo-v)))
+  (test-assert "foo?" (foo? (make-foo 'a))))
+
+(let ()
+  (define-mode-parameter foo-parameter make-foo-parameter foo-parameter?
+    (foo parameter-foo))
   (test-assert "foo-parameter?" (foo-parameter? (make-foo-parameter "s")))
-  (test-error  "field type" (make-foo-parameter #u8(1 2 3)))
+  ;; (test-error  "field type" (make-foo-parameter #u8(1 2 3)))
   (let ((foo (make-foo-parameter "s")))
     (test-assert "mode-parameter?" (mode-parameter? foo))
     (test-equal "parameter-foo" "s" (parameter-foo foo))
