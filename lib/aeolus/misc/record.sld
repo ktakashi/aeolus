@@ -30,7 +30,7 @@
 ;; maybe we can also use SRFI-99 or (rnrs)
 (define-library (aeolus misc record)
   (export define-record-type
-	  fields protocol parent immutable)
+	  fields mutable immutable parent protocol sealed opaque nongenerative)
   (import (rename (scheme base) (define-record-type scheme:define-record-type)))
   ;; TODO use (rnrs) or SRFI-99 if exists
   (include "record/opaque-cell.scm")

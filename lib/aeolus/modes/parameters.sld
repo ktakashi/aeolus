@@ -55,13 +55,13 @@
 	   (unless (check params)
 	     (error "make-composite-parameter: mode-parameter is required"
 		    params))
-	   (p (let loop ((params params) (r '()))
-		(cond ((null? params) (reverse r))
-		      ((composite-parameter? (car params))
-		       (loop (cdr params)
-			     `(,@(parameter-composite-parameters (car params))
-			       . r)))
-		      (else (loop (cdr params) (cons (car params) r))))))))))
+	   ((p) (let loop ((params params) (r '()))
+		  (cond ((null? params) (reverse r))
+			((composite-parameter? (car params))
+			 (loop (cdr params)
+			       `(,@(parameter-composite-parameters (car params))
+				 . r)))
+			(else (loop (cdr params) (cons (car params) r))))))))))
 
     (define (find-parameter pred composite)
       (cond ((composite-parameter? composite)
@@ -124,16 +124,19 @@
 	 (lambda (iv)
 	   (unless (bytevector? iv)
 	     (error "make-iv-paramater: iv must be a bytevector"))
-	   (p iv))))
+	   ((p) iv))))
       iv-parameter?
       (iv parameter-iv))
 
     (define-mode-parameter (<counter-parameter> <iv-parameter>)
       (make-counter-parameter 
        (lambda (p) 
+	 (define (check type)
+	   (unless (memq type '(big little))
+	     (error "make-counter-parameter: big or little is required" type)))
 	 (case-lambda
-	  ((iv type) ((p iv) type 0))
-	  ((iv type round) ((p iv) type round)))))
+	  ((iv type) (check type) ((p iv) type 0))
+	  ((iv type round) (check type) ((p iv) type round)))))
       counter-parameter?
       (endian parameter-endian)
       (rount  parameter-round))
