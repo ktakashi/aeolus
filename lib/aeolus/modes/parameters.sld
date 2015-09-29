@@ -32,7 +32,7 @@
 	  define-mode-parameter
 	  make-iv-paramater iv-parameter? parameter-iv <iv-parameter>
 	  make-counter-parameter counter-parameter?    <counter-parameter>
-	  parameter-endian parameter-round
+	  parameter-endian
 	  make-rfc3686-parameter rfc3686-parameter?    <rfc3686-parameter>
 
 	  make-round-parameter round-parameter? parameter-round
