@@ -30,9 +30,13 @@
 (define-library (aeolus modes parameters)
   (export mode-parameter? make-composite-parameter 
 	  define-mode-parameter
-	  make-iv-paramater iv-parameter? parameter-iv
-	  make-counter-parameter counter-parameter?
+	  make-iv-paramater iv-parameter? parameter-iv <iv-parameter>
+	  make-counter-parameter counter-parameter?    <counter-parameter>
 	  parameter-endian parameter-round
+	  make-rfc3686-parameter rfc3686-parameter?    <rfc3686-parameter>
+
+	  make-round-parameter round-parameter? parameter-round
+	  <round-parameter>
 	  )
   (import (except (scheme base) define-record-type)
 	  (scheme case-lambda)
@@ -106,17 +110,22 @@
 	     (or (%pred o)
 		 (and (composite-parameter? o)
 		      (find-parameter %pred o))))
-	   (define (acc o) 
+	   (define (acc o . optional) 
 	     (let ((p (find-parameter %pred o)))
-	       (if p
-		   (real p)
-		   (error (string-append (symbol->string 'acc)
-					 ":doesn't have the field")))))
+	       (cond (p (real p))
+		     ((not (null? optional)) (car optional))
+		     (else 
+		      (error (string-append (symbol->string 'acc)
+					    ":doesn't have the field"))))))
 	   ...))
 	;; entry point
 	((_ name ctr pred fields ...)
 	 (define-mode-parameter "field" name ctr pred %ctr %pred ()
 	   (fields ...)))))
+
+    (define-mode-parameter <round-parameter> 
+      make-round-parameter round-parameter?
+      (round  parameter-round))
 
     (define-mode-parameter <iv-parameter> 
       (make-iv-paramater 
@@ -134,12 +143,35 @@
 	 (define (check type)
 	   (unless (memq type '(big little))
 	     (error "make-counter-parameter: big or little is required" type)))
-	 (case-lambda
-	  ((iv type) (check type) ((p iv) type 0))
-	  ((iv type round) (check type) ((p iv) type round)))))
+	 (lambda (iv type) (check type) ((p iv) type))))
       counter-parameter?
-      (endian parameter-endian)
-      (rount  parameter-round))
+      (endian parameter-endian))
+
+    (define-mode-parameter (<rfc3686-parameter> <counter-parameter>)
+      (make-rfc3686-parameter
+       (lambda (p)
+	 (define (make-iv iv nonce type)
+	   (let ((v (make-bytevector 16)) ;; AES blocksize
+		 (nlen (bytevector-length nonce))
+		 (ivlen (bytevector-length iv)))
+	   (if (eq? type 'big)
+	       (begin
+		 (bytevector-copy! v 0 nonce 0)
+		 (bytevector-copy! v nlen iv 0)
+		 (bytevector-u8-set! v 15 1))
+	       (begin
+		 (bytevector-u8-set! v 0 1)
+		 (bytevector-copy! v 4 iv 0)
+		 (bytevector-copy! v (+ 4 ivlen) nonce 0)))
+	   v))
+	 (case-lambda
+	  ((iv nonce type) 
+	   (let ((iv (make-iv iv nonce type)))
+	     ((p iv type))))
+	  ((iv nonce type round) 
+	   (let ((iv (make-iv iv nonce type)))
+	     ((p iv type cound)))))))
+      rfc3686-parameter?)
 
     )
 )

@@ -1,37 +1,3 @@
-;; common thing, TODO move to somewhere
-(define-syntax byte
-  (syntax-rules ()
-    ((_ x i)
-     (let ((n (* 8 i)))
-       (bitwise-and #xff (arithmetic-shift x (- n)))))))
-
-(define (rol x y)
-  (define y31 (bitwise-and y 31))
-  (let ((n1 (arithmetic-shift x y31))
-	(n2 (bitwise-and (arithmetic-shift (bitwise-and x #xFFFFFFFF) 
-					   (- y31 32))
-			 #xFFFFFFFF)))
-    (bitwise-and (bitwise-ior n1 n2) #xFFFFFFFF)))
-(define (ror x y)
-  (define y31 (bitwise-and y 31))
-  (let ((n1 (arithmetic-shift (bitwise-and x #xFFFFFFFF) (- y31)))
-	(n2 (arithmetic-shift x (- 32 y31))))
-    (bitwise-and (bitwise-ior n1 n2) #xFFFFFFFF)))
-(define rolc rol)
-(define rorc ror)
-
-;; load32h
-(define (load32h bv start)
-  (bitwise-ior (arithmetic-shift (bytevector-u8-ref bv start) 24)
-	       (arithmetic-shift (bytevector-u8-ref bv (+ start 1)) 16)
-	       (arithmetic-shift (bytevector-u8-ref bv (+ start 2)) 8)
-	       (bytevector-u8-ref bv (+ start 3))))
-(define (store32h bv start v)
-  (bytevector-u8-set! bv start (bitwise-and (arithmetic-shift v -24) #xFF))
-  (bytevector-u8-set! bv (+ start 1) (bitwise-and (arithmetic-shift v -16) #xFF))
-  (bytevector-u8-set! bv (+ start 2) (bitwise-and (arithmetic-shift v -8) #xFF))
-  (bytevector-u8-set! bv (+ start 3) (bitwise-and v #xFF)))
-
 ;; des operations
 (define (cookey raw out)
   (define cook (make-vector 32))

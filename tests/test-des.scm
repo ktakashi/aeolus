@@ -67,13 +67,6 @@
     #(#x018310DC409B26D6 #x1D9D5C5018F728C2 #x5F4C038ED12B2E41)
     #(#x1C587F1C13924FEF #x305532286D6F295A #x63FAC0D034D9F793)))
 
-(define (integer->bytevector integer size)
-  (let ((bv (make-bytevector size 0)))
-    (do ((i 0 (+ i 1)))
-	((= i size) bv)
-      (let ((n (bitwise-and (arithmetic-shift integer (* i -8)) #xFF)))
-	(bytevector-u8-set! bv (- size i 1) n)))))
-
 (define (des-ecb-test cipher-maker)
   (lambda (vec)
     (let ((key (integer->bytevector (vector-ref vec 0) 8))
@@ -298,6 +291,5 @@
 (for-each (test-cbc-decrypt DES-CBC)  cbc-decrypt-test-vector)
 (for-each (test-cbc-decrypt DES2-CBC) cbc-decrypt-test-vector)
 (for-each (test-cbc-decrypt DES3-CBC) cbc-decrypt-test-vector)
-
 
 (test-end)

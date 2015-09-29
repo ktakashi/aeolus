@@ -31,7 +31,8 @@
   (export mode-ecb)
   (import (scheme base)
 	  (aeolus cipher descriptor)
-	  (aeolus modes descriptor))
+	  (aeolus modes descriptor)
+	  (aeolus modes parameters))
   (begin
     (define-record-type <symmetric-ecb> (make-ecb spec key blocklen)
       symmetric-ecb?
@@ -42,7 +43,7 @@
     ;; spec is a vector
     (define (ecb-start spec key param)
       (let ((skey ((cipher-descriptor-setup spec) key 
-		   (cipher-descriptor-default-round spec)))
+		   (or (parameter-round param 0) 0)))
 	    (blocklen (cipher-descriptor-block-size spec)))
 	(make-ecb spec skey blocklen)))
 

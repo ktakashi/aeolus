@@ -32,7 +32,8 @@
 	  (rename DES3 DESede))
   (import (scheme base) 
 	  (aeolus cipher descriptor)
-	  (aeolus misc bitwise))
+	  (aeolus misc bitwise)
+	  (aeolus misc common))
   (include "des/schedule.scm")
   (include "des/operations.scm")
   (begin

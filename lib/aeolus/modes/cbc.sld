@@ -46,7 +46,7 @@
     (define (cbc-start spec key param)
       (unless (iv-parameter? param) (error "cbc-start: CBC requires IV"))
       (let ((skey ((cipher-descriptor-setup spec) key 
-		   (cipher-descriptor-default-round spec)))
+		   (or (parameter-round param 0) 0)))
 	    (blocklen (cipher-descriptor-block-size spec)))
 	(make-cbc spec (parameter-iv param) skey blocklen)))
 

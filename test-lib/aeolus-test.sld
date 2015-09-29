@@ -1,9 +1,20 @@
+;; -*- mode:scheme; coding:utf-8 -*-
 (define-library (aeolus-test)
   (export test-begin
 	  test-end
 	  test-assert
 	  test-equal
-	  test-error)
+	  test-error
+	  integer->bytevector)
+  (import (scheme base)
+	  (aeolus misc bitwise))
+  (begin
+    (define (integer->bytevector integer size)
+      (let ((bv (make-bytevector size 0)))
+	(do ((i 0 (+ i 1)))
+	    ((= i size) bv)
+	  (let ((n (bitwise-and (arithmetic-shift integer (* i -8)) #xFF)))
+	    (bytevector-u8-set! bv (- size i 1) n))))))
   ;; sign...
   (cond-expand
    ((library (srfi 64))
