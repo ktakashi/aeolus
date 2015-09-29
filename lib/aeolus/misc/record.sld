@@ -31,10 +31,13 @@
 (define-library (aeolus misc record)
   (export define-record-type
 	  fields mutable immutable parent protocol sealed opaque nongenerative)
-  (import (rename (scheme base) (define-record-type scheme:define-record-type)))
-  ;; TODO use (rnrs) or SRFI-99 if exists
-  (include "record/opaque-cell.scm")
-  (include "record/vector-types.scm")
-  (include "record/core.scm")
-  (include "record/explicit.scm")
+  (cond-expand
+   ((library (rnrs)) (import (rnrs)))
+   (else
+    (import (rename (scheme base)
+		    (define-record-type scheme:define-record-type)))
+    (include "record/opaque-cell.scm")
+    (include "record/vector-types.scm")
+    (include "record/core.scm")
+    (include "record/explicit.scm")))
   )
