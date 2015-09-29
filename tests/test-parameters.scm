@@ -23,8 +23,6 @@
 	     (counter-parameter? (make-counter-parameter #u8() 'big)))
 (test-assert "ctr parameter (2)" 
 	     (counter-parameter? (make-counter-parameter #u8() 'big)))
-(test-assert "ctr parameter (3)" 
-	     (counter-parameter? (make-counter-parameter #u8() 'big 0)))
 
 (test-error "ctr parameter (error)"  (make-counter-parameter #u8() 'unknown))
 

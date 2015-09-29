@@ -78,7 +78,7 @@
   (syntax-rules ()
     ((define-record-type (?record-name ?constructor-name ?predicate-name)
        ?clause ...)
-     (define-record-type-1
+     (define-record-type-1 (%rtd %constructor-descriptor)
        ((record-name ?record-name); prop alist
 	(constructor-name ?constructor-name)
 	(predicate-name ?predicate-name))
@@ -88,87 +88,87 @@
 (define-syntax define-record-type-1
   (syntax-rules (parent protocol sealed nongenerative opaque fields mutable immutable)
     ;; find PARENT clause
-    ((define-record-type-1 ?props
+    ((define-record-type-1 names ?props
        ?field-specs
        (parent ?parent)
        ?clause ...)
-     (define-record-type-1 ((parent ?parent) . ?props)
+     (define-record-type-1 names ((parent ?parent) . ?props)
        ?field-specs
        ?clause ...))
 
     ;; find PROTOCOL clause
-    ((define-record-type-1 ?props
+    ((define-record-type-1 names ?props
        ?field-specs
        (protocol ?protocol)
        ?clause ...)
-     (define-record-type-1 ((protocol ?protocol) . ?props)
+     (define-record-type-1 names ((protocol ?protocol) . ?props)
        ?field-specs
        ?clause ...))
 
     ;; find SEALED clause
-    ((define-record-type-1 ?props
+    ((define-record-type-1 names ?props
        ?field-specs
        (sealed #t)
        ?clause ...)
-     (define-record-type-1 ((sealed #t) . ?props)
+     (define-record-type-1 names ((sealed #t) . ?props)
        ?field-specs
        ?clause ...))
-    ((define-record-type-1 ?props
+    ((define-record-type-1 names ?props
        ?field-specs
        (sealed #f)
        ?clause ...)
-     (define-record-type-1 ((sealed #f) . ?props)
+     (define-record-type-1 names ((sealed #f) . ?props)
        ?field-specs
        ?clause ...))
 
     ;; find OPAQUE clause
-    ((define-record-type-1 ?props
+    ((define-record-type-1 names ?props
        ?field-specs
        (opaque #t)
        ?clause ...)
-     (define-record-type-1 ((opaque #t) . ?props)
+     (define-record-type-1 names ((opaque #t) . ?props)
        ?field-specs
        ?clause ...))
-    ((define-record-type-1 ?props
+    ((define-record-type-1 names ?props
        ?field-specs
        (opaque #f)
        ?clause ...)
-     (define-record-type-1 ((opaque #f) . ?props)
+     (define-record-type-1 names ((opaque #f) . ?props)
        ?field-specs
        ?clause ...))
 
     ;; parse FIELDS clause
 
     ;; base case
-    ((define-record-type-1 ?props
+    ((define-record-type-1 names ?props
        (?field-spec ...)
        (fields)
        ?clause ...)
-     (define-record-type-1 ?props
+     (define-record-type-1 names ?props
        (?field-spec ...)
        ?clause ...))
 
     ;; complete spec
-    ((define-record-type-1 ?props
+    ((define-record-type-1 names ?props
        (?field-spec ...)
        (fields (immutable ?field-name ?accessor) ?rest ...)
        ?clause ...)
-     (define-record-type-1 ?props
+     (define-record-type-1 names ?props
        (?field-spec ... (immutable ?field-name (?accessor))) 
        (fields ?rest ...)
        ?clause ...))
 
-    ((define-record-type-1 ?props
+    ((define-record-type-1 names ?props
        (?field-spec ...)
        (fields (mutable ?field-name ?accessor ?mutator) ?rest ...)
        ?clause ...)
-     (define-record-type-1 ?props
+     (define-record-type-1 names ?props
        (?field-spec ... (mutable ?field-name (?accessor ?mutator)))
        (fields ?rest ...)
        ?clause ...))
 
     ;; find NONGENERATIVE clause
-    ((define-record-type-1 ?props
+    ((define-record-type-1 names ?props
        ?field-specs
        (nongenerative ?uid)
        ?clause ...)
@@ -177,7 +177,7 @@
        ?clause ...))
 
     ;; generate code
-    ((define-record-type-1 ?props
+    ((define-record-type-1 ($rtd $constructor-descriptor) ?props
        ((?mutability ?field-name ?procs) ...))
 
      (begin
