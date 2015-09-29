@@ -47,7 +47,7 @@
       (unless (iv-parameter? param) (error "cbc-start: CBC requires IV"))
       (let ((skey ((cipher-descriptor-setup spec) key 
 		   (cipher-descriptor-default-round spec)))
-	    (blocklen (vector-ref spec 2)))
+	    (blocklen (cipher-descriptor-block-size spec)))
 	(make-cbc spec (parameter-iv param) skey blocklen)))
 
     (define (cbc-setiv cbc iv)
@@ -70,7 +70,7 @@
       (unless (zero? (modulo pt-len blocklen))
 	(error "cbc-encrypt: invalid argument"))
       (let ((ct (make-bytevector (bytevector-length pt)))
-	    (encrypt (vector-ref (cbc-cipher-spec cbc) 5))
+	    (encrypt (cipher-descriptor-encrypt (cbc-cipher-spec cbc)))
 	    (key (cbc-cipher-key cbc)))
 	(let loop ((i 0))
 	  (if (= i pt-len)
@@ -90,7 +90,7 @@
       (unless (zero? (modulo ct-len blocklen))
 	(error "cbc-decrypt: invalid argument"))
       (let ((pt (make-bytevector (bytevector-length ct)))
-	    (decrypt (vector-ref (cbc-cipher-spec cbc) 6))
+	    (decrypt (cipher-descriptor-decrypt (cbc-cipher-spec cbc)))
 	    (key (cbc-cipher-key cbc))
 	    (tmp (make-bytevector blocklen)))
 	(let loop ((i 0))
