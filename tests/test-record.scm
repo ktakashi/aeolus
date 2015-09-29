@@ -1,5 +1,4 @@
 (import (except (scheme base) define-record-type)
-	(aeolus modes parameters)
 	(aeolus misc record)
 	(aeolus-test))
 

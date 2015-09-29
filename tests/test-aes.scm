@@ -6,7 +6,8 @@
 	(aeolus modes cbc)
 	(aeolus modes ctr)
 	(aeolus modes parameters)
-	(aeolus-test))
+	(aeolus-test)
+	(extra-aes-vectors))
 
 (test-begin "AES")
 
@@ -59,7 +60,7 @@
 		(cipher-decrypt cipher ct))))
 
 (for-each test-aes-ecb test-aes-vectors)
-(for-each test-aes-ecb (include "aes-ecb-test-vectors.scm"))
+(for-each test-aes-ecb extra-aes-ecb-vectors)
 
 (define test-aes-ctr-vectors
   '(;; key-len key iv plain cipher1 ... plainn  ciphern

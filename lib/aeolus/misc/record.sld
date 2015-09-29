@@ -36,6 +36,23 @@
    (else
     (import (rename (scheme base)
 		    (define-record-type scheme:define-record-type)))
+    (begin 
+      (define (find-tail pred list)
+	(let lp ((list list))
+	  (and (not (null? list))
+	       (if (pred (car list)) list
+		   (lp (cdr list))))))
+      (define (find proc lis)
+	(cond ((find-tail proc lis) => car)
+	      (else #f)))
+      ;; this is enough
+      (define (for-all proc lis1 lis2)
+	(cond ((and (null? lis1) (null? lis2)))
+	      ((and (pair? lis1) (pair? lis2))
+	       (and (proc (car lis1) (car lis2))
+		    (for-all (cdr lis1) (cdr lis2))))
+	      (else (error "incorrect list is given (maybe not the same length)"
+			   lis1 lis2)))))
     (include "record/opaque-cell.scm")
     (include "record/vector-types.scm")
     (include "record/core.scm")

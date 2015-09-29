@@ -30,8 +30,8 @@
 
 (define-syntax define-aux
   (syntax-rules ()
-    [(_ id) (define-syntax id (syntax-rules ()))]
-    [(_ id ...) (begin (define-aux id) ...)]))
+    ((_ id) (define-syntax id (syntax-rules ())))
+    ((_ id ...) (begin (define-aux id) ...))))
 
 (define-aux
   fields mutable immutable parent protocol sealed opaque nongenerative)

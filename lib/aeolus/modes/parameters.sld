@@ -170,7 +170,7 @@
 	     ((p iv type))))
 	  ((iv nonce type round) 
 	   (let ((iv (make-iv iv nonce type)))
-	     ((p iv type cound)))))))
+	     ((p iv type round)))))))
       rfc3686-parameter?)
 
     )
