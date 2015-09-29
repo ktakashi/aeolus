@@ -40,6 +40,7 @@ The library is tested on the following R7RS implementations:
 - Sagittarius Scheme 0.6.8
 - Gauche 0.9.5 (HEAD)
 - Chibi Scheme 0.7.3
+- Larceny 0.98 (General Ripper)
 
 Copyright and license
 ---------------------
