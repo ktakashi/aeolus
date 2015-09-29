@@ -20,13 +20,13 @@
       (test-equal "parameter-iv" #u8(1) (parameter-iv composite)))))
 
 (test-assert "ctr parameter (1)" 
-	     (counter-parameter? (make-counter-parameter #vu8() 'big)))
+	     (counter-parameter? (make-counter-parameter #u8() 'big)))
 (test-assert "ctr parameter (2)" 
-	     (counter-parameter? (make-counter-parameter #vu8() 'big)))
+	     (counter-parameter? (make-counter-parameter #u8() 'big)))
 (test-assert "ctr parameter (3)" 
-	     (counter-parameter? (make-counter-parameter #vu8() 'big 0)))
+	     (counter-parameter? (make-counter-parameter #u8() 'big 0)))
 
-(test-error "ctr parameter (error)"  (make-counter-parameter #vu8() 'unknown))
+(test-error "ctr parameter (error)"  (make-counter-parameter #u8() 'unknown))
 
 
 (test-end)
