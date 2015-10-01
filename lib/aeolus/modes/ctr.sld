@@ -33,15 +33,16 @@
 	  (aeolus modes descriptor)
 	  (aeolus modes parameters)
 	  (aeolus cipher descriptor)
-	  (aeolus misc bitwise)
-	  (scheme write))
+	  (aeolus misc bitwise))
   (begin
     (define-record-type <symmetric-ctr> 
-      (make-ctr spec ctr pad key big? blocklen)
+      (make-ctr spec ctr pad index key big? blocklen)
       symmetric-ctr?
       (spec ctr-cipher-spec)
       (ctr  ctr-cipher-ctr)
       (pad  ctr-cipher-pad)
+      ;; index of current padding vector
+      (index  ctr-cipher-index ctr-cipher-index-set!)
       (key  ctr-cipher-key)
       (big? ctr-cipher-big?)	      ;; big endian (should we support little?)
       (blocklen ctr-cipher-blocklen)) ;; well not needed but for convenience
@@ -66,7 +67,7 @@
 	  ;; initialise pad
 	  (unless (= (encrypt ctr 0 pad 0 skey) blocklen)
 	    (error "ctr-start: failed to set IV"))
-	  (make-ctr spec ctr pad skey big? blocklen))))
+	  (make-ctr spec ctr pad 0 skey big? blocklen))))
 
     (define (ctr-setiv ctr iv)
       (define blocklen (ctr-cipher-blocklen ctr))
@@ -77,7 +78,9 @@
       (let ((encrypt (cipher-descriptor-encrypt (ctr-cipher-spec ctr))))
 	(unless (= (encrypt iv 0 (ctr-cipher-pad ctr) 0 (ctr-cipher-key ctr)) 
 		   blocklen)
-	  (error "ctr-setiv: failed to set IV"))))
+	  (error "ctr-setiv: failed to set IV"))
+	;; forse resetting index
+	(ctr-cipher-index-set! ctr 0)))
 
     (define (ctr-getiv ctr) (bytevector-copy (ctr-cipher-ctr ctr)))
 
@@ -89,41 +92,43 @@
       (define pad    (ctr-cipher-pad ctr))
       (define big? (ctr-cipher-big? ctr))
 
-      (define (ctr-xor pt ct start pad)
-	(do ((i 0 (+ i 1)))
-	    ((= i blocklen))
+      (define (ctr-xor pt ct start pad index)
+	(do ((i 0 (+ i 1)) (index index (+ index 1)))
+	    ((or (= (+ i start) pt-len) (= index blocklen)) (values i index))
 	  (let ((ptc (bytevector-u8-ref pt (+ i start)))
-		(pac (bytevector-u8-ref pad i)))
+		(pac (bytevector-u8-ref pad index)))
 	    (bytevector-u8-set! ct (+ i start) (bitwise-xor ptc pac)))))
 
-      (unless (zero? (modulo pt-len blocklen))
-	(error "ctr-encrypt: invalid argument"))
       (let ((ct (make-bytevector (bytevector-length pt)))
 	    (encrypt (cipher-descriptor-encrypt (ctr-cipher-spec ctr)))
 	    (key (ctr-cipher-key ctr)))
 	(let loop ((i 0))
 	  (cond ((= i pt-len) ct)
 		(else
-		 (ctr-xor pt ct i pad)
-		 ;; ok increament it
-		 (if big?
-		     (let loop ((i (- blocklen 1)))
-		       (unless (< i 0)
-			 (let ((x (bytevector-u8-ref ctr-bv i)))
-			   (bytevector-u8-set! ctr-bv i
-					       (bitwise-and (+ x 1) #xFF))
-			   (when (zero? (bytevector-u8-ref ctr-bv i))
-			     (loop (- i 1))))))
-		     (let loop ((i 0))
-		       (when (< i blocklen)
-			 (let ((x (bytevector-u8-ref ctr-bv i)))
-			   (bytevector-u8-set! ctr-bv i
-					       (bitwise-and (+ x 1) #xFF))
-			   (when (zero? (bytevector-u8-ref ctr-bv i))
-			     (loop (+ i 1)))))))
-		 (unless (= (encrypt ctr-bv 0 pad 0 key) blocklen)
-		   (error "ctr-encrypt: invalid encryption"))
-		 (loop (+ i blocklen)))))))
+		 (let-values (((t next-index)
+			       (ctr-xor pt ct i pad (ctr-cipher-index ctr))))
+		   (cond ((= next-index blocklen)
+			  ;; ok increament it
+			  (if big?
+			      (let loop ((i (- blocklen 1)))
+				(unless (< i 0)
+				  (let ((x (bytevector-u8-ref ctr-bv i)))
+				    (bytevector-u8-set! ctr-bv i
+				      (bitwise-and (+ x 1) #xFF))
+				    (when (zero? (bytevector-u8-ref ctr-bv i))
+				      (loop (- i 1))))))
+			      (let loop ((i 0))
+				(when (< i blocklen)
+				  (let ((x (bytevector-u8-ref ctr-bv i)))
+				    (bytevector-u8-set! ctr-bv i
+				      (bitwise-and (+ x 1) #xFF))
+				    (when (zero? (bytevector-u8-ref ctr-bv i))
+				      (loop (+ i 1)))))))
+			  (ctr-cipher-index-set! ctr 0))
+			 (else (ctr-cipher-index-set! ctr next-index)))
+		     (unless (= (encrypt ctr-bv 0 pad 0 key) blocklen)
+		       (error "ctr-encrypt: invalid encryption"))
+		   (loop (+ i t))))))))
     
     (define (ctr-done ctr)
       ((cipher-descriptor-done (ctr-cipher-spec ctr)) (ctr-cipher-key ctr)))

@@ -143,7 +143,9 @@
 	 (define (check type)
 	   (unless (memq type '(big little))
 	     (error "make-counter-parameter: big or little is required" type)))
-	 (lambda (iv type) (check type) ((p iv) type))))
+	 (case-lambda
+	  ((iv) ((p iv) 'big))
+	  ((iv type) (check type) ((p iv) type)))))
       counter-parameter?
       (endian parameter-endian))
 
@@ -165,12 +167,12 @@
 		 (bytevector-copy! v (+ 4 ivlen) nonce 0)))
 	   v))
 	 (case-lambda
+	  ((iv nonce) 
+	   (let ((iv (make-iv iv nonce 'big)))
+	     ((p iv 'big))))
 	  ((iv nonce type) 
 	   (let ((iv (make-iv iv nonce type)))
-	     ((p iv type))))
-	  ((iv nonce type round) 
-	   (let ((iv (make-iv iv nonce type)))
-	     ((p iv type round)))))))
+	     ((p iv type)))))))
       rfc3686-parameter?)
 
     )
