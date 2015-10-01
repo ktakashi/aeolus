@@ -153,7 +153,7 @@
       (make-rfc3686-parameter
        (lambda (p)
 	 (define (make-iv iv nonce type)
-	   (let ((v (make-bytevector 16)) ;; AES blocksize
+	   (let ((v (make-bytevector 16 0)) ;; AES blocksize
 		 (nlen (bytevector-length nonce))
 		 (ivlen (bytevector-length iv)))
 	   (if (eq? type 'big)
