@@ -55,20 +55,31 @@
 	(bitwise-and (bitwise-ior n1 n2) #xFFFFFFFF)))
     (define rolc rol)
     (define rorc ror)
-
-    ;; load32h
-    (define (load32h bv start)
-      (bitwise-ior (arithmetic-shift (bytevector-u8-ref bv start) 24)
-		   (arithmetic-shift (bytevector-u8-ref bv (+ start 1)) 16)
-		   (arithmetic-shift (bytevector-u8-ref bv (+ start 2)) 8)
-		   (bytevector-u8-ref bv (+ start 3))))
-    (define (store32h bv start v)
-      (bytevector-u8-set! bv start (bitwise-and (arithmetic-shift v -24) #xFF))
-      (bytevector-u8-set! bv (+ start 1) (bitwise-and (arithmetic-shift v -16) #xFF))
-      (bytevector-u8-set! bv (+ start 2) (bitwise-and (arithmetic-shift v -8) #xFF))
-      (bytevector-u8-set! bv (+ start 3) (bitwise-and v #xFF)))
-
-
     )
+  ;; load32h
+  (cond-expand
+   ((library (rnrs))
+    (import (only (rnrs) bytevector-u32-ref bytevector-u32-set!))
+    (begin
+      (define (load32h bv start)
+	(bytevector-u32-ref bv start 'big))
+      (define (store32h bv start v)
+	(bytevector-u32-set! bv start v 'big))))
+   (else
+    (begin
+      (define (load32h bv start)
+	(bitwise-ior (arithmetic-shift (bytevector-u8-ref bv start) 24)
+		     (arithmetic-shift (bytevector-u8-ref bv (+ start 1)) 16)
+		     (arithmetic-shift (bytevector-u8-ref bv (+ start 2)) 8)
+		     (bytevector-u8-ref bv (+ start 3))))
+      (define (store32h bv start v)
+	(bytevector-u8-set! bv start
+			    (bitwise-and (arithmetic-shift v -24) #xFF))
+	(bytevector-u8-set! bv (+ start 1)
+			    (bitwise-and (arithmetic-shift v -16) #xFF))
+	(bytevector-u8-set! bv (+ start 2)
+			    (bitwise-and (arithmetic-shift v -8) #xFF))
+	(bytevector-u8-set! bv (+ start 3)
+			    (bitwise-and v #xFF))))))
 )
 	  
