@@ -31,13 +31,22 @@
   (export make-cipher cipher?
 	  cipher-encrypt
 	  cipher-decrypt
+	  cipher-blocksize
 	  cipher-done)
-  (import (scheme base) (aeolus modes descriptor))
+  (import (scheme base)
+	  (aeolus cipher descriptor)
+	  (aeolus modes descriptor)
+	  (aeolus padding)
+	  (scheme write))
   (begin
     ;; TODO padding
-    (define-record-type <cipher> (%make-cipher mode key) cipher?
+    (define-record-type <cipher> 
+      (%make-cipher mode key blocksize padder unpadder) cipher?
       (mode cipher-mode)
       (key  cipher-key) ;; mode key
+      (blocksize cipher-blocksize) ;; for convenience
+      (padder cipher-padder)
+      (unpadder cipher-unpadder)
       )
       
     (define (make-cipher spec key  mode . maybe-param)
@@ -45,15 +54,30 @@
 			#f 
 			(car maybe-param)))
 	     (modev (mode))
-	     (setup (mode-descriptor-start modev)))
+	     (setup (mode-descriptor-start modev))
+	     (specs (spec))
+	     (padder (and param (padding-padder param #f)))
+	     (unpadder (and param (padding-unpadder param #f))))
 	;; setup it with mode
-	(%make-cipher modev (setup (spec) key param))))
+	(%make-cipher modev 
+		      (setup specs key param)
+		      (cipher-descriptor-block-size specs)
+		      padder
+		      unpadder)))
 
     (define (cipher-encrypt cipher pt)
-      ((mode-descriptor-encrypt (cipher-mode cipher)) (cipher-key cipher) pt))
+      (define padder (cipher-padder cipher))
+      (let ((pt (if padder (padder pt (cipher-blocksize cipher)) pt)))
+	((mode-descriptor-encrypt (cipher-mode cipher)) 
+	 (cipher-key cipher) pt)))
 
     (define (cipher-decrypt cipher ct)
-      ((mode-descriptor-decrypt (cipher-mode cipher)) (cipher-key cipher) ct))
+      (define unpdder (cipher-unpadder cipher))
+      (let ((pt ((mode-descriptor-decrypt (cipher-mode cipher)) 
+		 (cipher-key cipher) ct)))
+	(if unpdder
+	    (unpdder pt (cipher-blocksize cipher))
+	    pt)))
 
     (define (cipher-done cipher)
       ((mode-descriptor-decrypt (cipher-mode cipher)) (cipher-key cipher)))

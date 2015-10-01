@@ -4,6 +4,8 @@
 	(aeolus modes ecb)
 	(aeolus modes cbc)
 	(aeolus modes parameters)
+	(aeolus padding)
+	(aeolus padding pkcs)
 	(aeolus misc bitwise)
 	(aeolus-test))
 
@@ -11,6 +13,9 @@
 
 (test-assert "cipher?"
 	     (cipher? (make-cipher DES #u8(1 2 3 4 5 6 7 8) mode-ecb)))
+
+(test-equal "cipher-blocksize" 8
+	    (cipher-blocksize (make-cipher DES #u8(1 2 3 4 5 6 7 8) mode-ecb)))
 
 (define test-vectors
   '(#(#x0000000000000000 #x0000000000000000 #x8CA64DE9C1B123A7)
@@ -74,7 +79,7 @@
 	  (ct (integer->bytevector (vector-ref vec 2) 8)))
       ;; it's ECB so we can reuse it
       (define cipher (cipher-maker key))
-      
+
       (test-equal (string-append "encrypt: " 
 				 (number->string (vector-ref vec 1) 16)
 				 " -> "
@@ -291,5 +296,16 @@
 (for-each (test-cbc-decrypt DES-CBC)  cbc-decrypt-test-vector)
 (for-each (test-cbc-decrypt DES2-CBC) cbc-decrypt-test-vector)
 (for-each (test-cbc-decrypt DES3-CBC) cbc-decrypt-test-vector)
+
+;; padding
+(let ((cipher (make-cipher DES #u8(1 2 3 4 5 6 7 8) mode-ecb
+			   (make-padding-parameter pkcs5-paddings))))
+  (cipher-encrypt cipher (string->utf8 "test"))
+  (test-assert "non blocksize" (cipher-encrypt cipher (string->utf8 "test")))
+  (test-equal "non blocksize" 
+	      "test"
+	      (utf8->string
+	       (cipher-decrypt cipher
+			       (cipher-encrypt cipher (string->utf8 "test"))))))
 
 (test-end)
