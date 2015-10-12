@@ -3,3 +3,8 @@
   (export extra-aes-ecb-vectors)
   (import (scheme base))
   (include "aes-ecb-test-vectors.scm"))
+(load "test-lib/aeolus-test.sld")
+(load "test-lib/aeolus-test.sld")
+(load "test-lib/aeolus-test.sld")
+(load "test-lib/aeolus-test.sld")
+(load "test-lib/aeolus-test.sld")

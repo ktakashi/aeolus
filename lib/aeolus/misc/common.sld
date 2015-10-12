@@ -30,7 +30,8 @@
 (define-library (aeolus misc common)
   (export byte
 	  rol ror rolc rorc
-	  load32h store32h)
+	  load32h 
+	  store32h store64h)
   (import (scheme base)
 	  (aeolus misc bitwise))
   (begin
@@ -59,12 +60,15 @@
   ;; load32h
   (cond-expand
    ((library (rnrs))
-    (import (only (rnrs) bytevector-u32-ref bytevector-u32-set!))
+    (import (only (rnrs) bytevector-u32-ref bytevector-u32-set!
+		  bytevector-u64-set!))
     (begin
       (define (load32h bv start)
 	(bytevector-u32-ref bv start 'big))
       (define (store32h bv start v)
-	(bytevector-u32-set! bv start v 'big))))
+	(bytevector-u32-set! bv start v 'big))
+      (define (store64h bv start v)
+	(bytevector-u64-set! bv start v 'big))))
    (else
     (begin
       (define (load32h bv start)
@@ -80,6 +84,23 @@
 	(bytevector-u8-set! bv (+ start 2)
 			    (bitwise-and (arithmetic-shift v -8) #xFF))
 	(bytevector-u8-set! bv (+ start 3)
+			    (bitwise-and v #xFF)))
+      (define (store64h bv start v)
+	(bytevector-u8-set! bv start
+			    (bitwise-and (arithmetic-shift v -56) #xFF))
+	(bytevector-u8-set! bv (+ start 1)
+			    (bitwise-and (arithmetic-shift v -48) #xFF))
+	(bytevector-u8-set! bv (+ start 2)
+			    (bitwise-and (arithmetic-shift v -40) #xFF))
+	(bytevector-u8-set! bv (+ start 3)
+			    (bitwise-and (arithmetic-shift v -32) #xFF))
+	(bytevector-u8-set! bv (+ start 4)
+			    (bitwise-and (arithmetic-shift v -24) #xFF))
+	(bytevector-u8-set! bv (+ start 5)
+			    (bitwise-and (arithmetic-shift v -16) #xFF))
+	(bytevector-u8-set! bv (+ start 6)
+			    (bitwise-and (arithmetic-shift v -8) #xFF))
+	(bytevector-u8-set! bv (+ start 7)
 			    (bitwise-and v #xFF))))))
 )
 	  
