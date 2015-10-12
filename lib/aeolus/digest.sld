@@ -67,7 +67,6 @@
       (if (digest? digest)
 	  (let ((out (make-bytevector (digest-size digest))))
 	    (apply digest-process! digest bv optional)
-	    (digest-done! digest out)
-	    out)
+	    (digest-done! digest out))
 	  (apply bytevector->digest (make-digest digest) bv optional)))
     ))
