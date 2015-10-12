@@ -46,7 +46,11 @@
       (protocol (lambda (p)
 		  (lambda ()
 		    ((p (make-bytevector 64 0))
-		     #x67452301 #xefcdab89 #x98badcfe #x10325476 #xc3d2e1f0)))))
+		     #x67452301
+		     #xefcdab89
+		     #x98badcfe 
+		     #x10325476
+		     #xc3d2e1f0)))))
 
     (define (sha1-compress sha1 buffer start)
       (define W (make-vector 80 0))
@@ -73,11 +77,7 @@
 	(define f3 f1)
 	(define (make-ff fn magic)
 	  (lambda (a b c d e i)
-	    (values (bitwise-and (+ (rolc a 5)
-				    (fn b c d)
-				    e
-				    (vector-ref W i))
-				 #xFFFFFFFF)
+	    (values (+ (rolc a 5) (fn b c d) e (vector-ref W i))
 		    (rolc b 30))))
 	;; returns next e and b (position)
 	(define ff0 (make-ff f0 #x5a827999))
@@ -139,7 +139,6 @@
 	  out)
 	;; append the '1' bit
 	(bytevector-u8-set! buffer c #x80)
-
 	(let loop ((c (next-c (+ c 1))))
 	  (if (= c 56)
 	      (do-final sha1 c)
