@@ -43,7 +43,6 @@
 	  digest-base-buffer
 	  )
   (import (except (scheme base) define-record-type)
-	  (scheme write)
 	  (aeolus misc record))
   (begin
     ;; the same as other descriptors, it's vector

@@ -5,9 +5,7 @@
 	(aeolus-test))
 
 (test-begin "Digest")
-#;(print #u8(#xa9 #x99 #x3e #x36 #x47 #x06 #x81 #x6a #xba #x3e
-	   #x25 #x71 #x78 #x50 #xc2 #x6c #x9c #xd0 #xd8 #x9d))
-;;(print (bytevector->digest SHA1 (string->utf8 "abc")))
+
 (test-equal "SHA1 abc" #u8(#xa9 #x99 #x3e #x36 #x47 #x06 #x81 #x6a #xba #x3e
 			   #x25 #x71 #x78 #x50 #xc2 #x6c #x9c #xd0 #xd8 #x9d)
 	    (bytevector->digest SHA1 (string->utf8 "abc")))
